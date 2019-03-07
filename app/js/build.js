@@ -529,7 +529,7 @@ function buildLogin(){
 
 
       if (!_.eq(crypt.sha256(email),i.user.email) || !_.eq(user,i.user.username)) {
-        return alert('incorrect email details')
+        return alert('incorrect login details')
       }
 
         chrome.system.cpu.getInfo(function(e){
