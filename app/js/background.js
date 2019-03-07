@@ -5,31 +5,33 @@ updateCallback = function () {
     showContextMenu = preferences.showContextMenu;
     setContextMenu(showContextMenu);
   }
-  chrome.browserAction.setIcon({ "path": "app/img/icon_19x19.png" });
+  chrome.browserAction.setIcon({ "path": "/app/img/icon_19x19.png" });
 };
+
+
 
 let currentVersion = chrome.runtime.getManifest().version,
 oldVersion = data.lastVersionRun;
 
 data.lastVersionRun = currentVersion;
 
-if (oldVersion !== currentVersion) {
+if (!_.eq(oldVersion, currentVersion)) {
   if (_.isUndefined(oldVersion)) { //Is firstrun
     chrome.tabs.create({
-      url: 'http://www.cookieStore.com/start/'
+      url: 'https://github.com/angeal185/cookie-store/'
     });
   } else {
     chrome.notifications.onClicked.addListener(function(notificationId) {
       chrome.tabs.create({
-        url: 'http://www.cookieStore.com/changelog/'
+        url: 'https://github.com/angeal185/cookie-store/releases/'
       });
       chrome.notifications.clear(notificationId, function(wasCleared) {});
     });
     let opt = {
       type: "basic",
-      title: "cookieStore",
+      title: "cookie-store",
       message: "updated",
-      iconUrl: "app/img/icon_128x128.png",
+      iconUrl: "/app/img/icon_128x128.png",
       isClickable: true
     };
     chrome.notifications.create("", opt, function(notificationId) {});
@@ -49,6 +51,8 @@ chrome.cookies.onChanged.addListener(function(changeInfo) {
   if (_.eq(cause, "expired") || _.eq(cause, "evicted")){
     return;
   }
+
+  console.log(data)
 
   for (var i = 0; i < data.readOnly.length; i++) {
     let currentRORule = data.readOnly[i];

@@ -10,9 +10,10 @@ if(!localStorage.getItem('exportName') || _.eq(localStorage.getItem('exportName'
 
 function initOptions(){
 
-  updateCallback = function () {
+  let updateCallback = function () {
       setOptions();
   };
+
 
   function setOptions() {
       //$("#saveMaxDateButton").button().hide();
@@ -215,13 +216,15 @@ function initReadonly(){
 
   var forceHideOperations = false;
 
-  updateCallback = function () {
+  let updateCallback = function () {
       location.reload(true);
       return;
 
       setReadOnlyRules();
       setEvents();
   };
+
+
 
   function setEvents() {
       $('.cmd_delete').off().on('click', function() {
@@ -359,7 +362,7 @@ function initBlock(){
   var forceHideOperations = false;
   var newRowVisible = false;
 
-  updateCallback = function () {
+  let updateCallback = function () {
       location.reload(true);
       return;
 
@@ -367,6 +370,8 @@ function initBlock(){
       setBlockRules();
       setEvents();
   };
+
+
 
   function setEvents() {
 
@@ -739,22 +744,22 @@ $(document).ready(function () {
   }
   _.forEach(['token','user'],function(i){
     if(!sessionStorage.getItem(i) || _.eq(sessionStorage.getItem(i), '')) {
-      localStorage.setItem('data_url','login')
+      ls.set('current_url','login')
     }
   })
 
-  if  (_.eq(localStorage.getItem('data_url'),'login')){
+  if  (_.eq(ls.get('current_url'),'login')){
     buildLogin()
     //initLogin()
-  } else if (_.eq(localStorage.getItem('data_url'),'store')){
+  } else if (_.eq(ls.get('current_url'),'store')){
     logout()
     buildStore()
     initStore()
-  } else if (_.eq(localStorage.getItem('data_url'),'options')){
+  } else if (_.eq(ls.get('current_url'),'options')){
     logout()
     buildOptions()
     initOptions()
-  } else if  (_.eq(localStorage.getItem('data_url'),'blockedCookies')){
+  } else if  (_.eq(ls.get('current_url'),'blockedCookies')){
     logout()
     buildBlock()
     initBlock()

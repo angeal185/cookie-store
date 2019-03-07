@@ -212,43 +212,49 @@ function fetchData() {
     }
 }
 
-window.addEventListener("storage", function (event) {
-    try {
-        let varUsed = false,
-        varChanged = false,
-        oldValue = (event.oldValue !== null) ? JSON.parse(event.oldValue) : null,
-        newValue = (event.newValue !== null) ? JSON.parse(event.newValue) : null;
 
-        if (_.eq(oldValue, newValue))
+  window.addEventListener("storage", function (event){
+      try {
+          let varUsed = false,
+          varChanged = false,
+          oldValue = (event.oldValue !== null) ? JSON.parse(event.oldValue) : null,
+          newValue = (event.newValue !== null) ? JSON.parse(event.newValue) : null,
+          key;
+          console.log('oldValue:' +oldValue)
+          console.log('newValue:' +newValue)
+          if (_.eq(oldValue, newValue)){
             return;
-
-        let key;
-        if (event.key.indexOf(preferences_prefix) === 0) {
-            key = event.key.substring(preferences_prefix.length);
-            varUsed = !!preferences_template[key].used;
-            varChanged = preferences[key] !== newValue;
-            preferences[key] = (newValue === null) ? preferences_template[key].default_value : newValue;
-            preferences_template[key].used = varUsed;
-        } else if (event.key.indexOf(data_prefix) === 0) {
-            key = event.key.substring(data_prefix.length);
-            varUsed = (data_template[key].used !== undefined && data_template[key].used);
-            varChanged = data[key] !== newValue;
-            data[key] = (newValue === null) ? data_template[key].default_value : newValue;
-            data_template[key].used = varUsed;
+          }
+          if (event.key.indexOf(preferences_prefix) === 0) {
+              key = event.key.substring(preferences_prefix.length);
+              varUsed = !!preferences_template[key].used;
+              varChanged = preferences[key] !== newValue;
+              preferences[key] = (newValue === null) ? preferences_template[key].default_value : newValue;
+              preferences_template[key].used = varUsed;
+          } else if (event.key.indexOf(data_prefix) === 0) {
+              key = event.key.substring(data_prefix.length);
+              varUsed = (data_template[key].used !== undefined && data_template[key].used);
+              varChanged = data[key] !== newValue;
+              data[key] = (newValue === null) ? data_template[key].default_value : newValue;
+              data_template[key].used = varUsed;
+          }
+          if (varUsed && varChanged && updateCallback !== undefined) {
+              return updateCallback();
+          }
+      } catch(e) {
+        if(e){
+          return console.error(e.message);
         }
-        if (varUsed && varChanged && updateCallback !== undefined) {
-            updateCallback();
-        }
-    } catch(e) {
-        console.error("Failed to call on the updateCallback.");
-        console.error(e.message);
-    }
-}, false);
+      }
+  }, false);
 
-fetchData();
+  fetchData();
 
-firstRun = ls.get("status_firstRun");
-if (firstRun !== null) {
+
+
+
+
+if (!_.isNull(ls.get("status_firstRun"))) {
     data.lastVersionRun = chrome.runtime.getManifest().version;
 }
 

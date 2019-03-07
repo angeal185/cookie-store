@@ -368,7 +368,7 @@ function buildOptNav(){
   $('.navLnk').off().on('click', function(event) {
     event.preventDefault();
     console.log(_.camelCase(this.text))
-    localStorage.setItem('data_url', _.camelCase(this.text))
+    ls.set('current_url', _.camelCase(this.text))
     location.reload()
   });
 }
@@ -495,7 +495,7 @@ function buildLogin(){
           console.log(obj)
           console.log(crypt.gcmDec(password, ver))
           newUser(obj, ver)
-          localStorage.setItem('data_url','')
+          ls.set('current_url','')
           return;
         })
       });
@@ -540,7 +540,7 @@ function buildLogin(){
           }
           sessionStorage.setItem('token', password);
           sessionStorage.setItem('user', user);
-          localStorage.setItem('data_url','');
+          ls.set('current_url','');
           console.log(crypt.gcmDec(password, i.verify))
           alert('login success!')
           return location.reload()
