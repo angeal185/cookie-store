@@ -763,11 +763,3 @@ $(document).ready(function () {
     initReadonly()
   }
 });
-
-
-
-
-
-
-
-//console.log(crypt.gcmDec('password','secret',crypt.gcmEnc('password','secret','text')))
