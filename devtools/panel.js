@@ -8,14 +8,12 @@ var backgroundPageConnection = chrome.runtime.connect({
 backgroundPageConnection.onMessage.addListener(function (message) {
   if (message.action === "getall") {
     createTable(message);
-  } else if (message.action === "refresh") {
-    location.reload(true);
   }
 });
 
 function start() {
   var arguments = getUrlVars();
-  if (arguments.url !== undefined) {//TESTING PURPOSES
+  if (!_.isUndefined(arguments.url)) {
     createList("https://google.com");
     return;
   }
@@ -39,7 +37,7 @@ function createList(url) {
 }
 
 function createTable(message) {
-  let tblTpl = _.template('<div id="main"><table id="cookieTable" class="striped responsive-table"><thead><tr></tr></thead><tbody></tbody></table></div>'),
+  let tblTpl = _.template('<div id="rl" class="fa fa-refresh"></div><div id="main"><table id="cookieTable" class="striped responsive-table"><thead><tr></tr></thead><tbody></tbody></table></div>'),
   tr = [
     "ID",
     "Name",
@@ -97,9 +95,12 @@ function createTable(message) {
     })
     $tableBody.append($row);
   }
+
+  $('#rl').off().on('click', function(event) {
+    location.reload(true);
+  });
 }
 
 $(document).ready(function () {
-  ++data.nPanelClicked;
   start();
 });
