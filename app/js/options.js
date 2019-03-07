@@ -745,7 +745,7 @@ $(document).ready(function () {
 
   if  (_.eq(localStorage.getItem('data_url'),'login')){
     buildLogin()
-    initLogin()
+    //initLogin()
   } else if (_.eq(localStorage.getItem('data_url'),'store')){
     logout()
     buildStore()
