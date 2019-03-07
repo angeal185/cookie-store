@@ -56,10 +56,6 @@ const preferences_template = {
     "copyCookiesType": {
         "default_value": "json"
     },
-    // If true, the standard icon on the toobar is changed for a christmassy one in certain periods of the year
-    "showChristmasIcon": {
-        "default_value": true
-    },
     // How cookies will be sorted. Supported values:
     //          alpha:        alphabetic ordering by cookie name
     //          domain_alpha: alphabetic ordering by domain and cookie name
@@ -68,7 +64,7 @@ const preferences_template = {
     },
     // Whether to show the panel in the DevTools panel (e.g. panel shown when pressing F12)
     "showDevToolsPanel": {
-        "default_value": true
+        "default_value": false
     }
 };
 
@@ -183,14 +179,14 @@ function fetchData() {
         default_value = preferences_template[key].default_value;
         preferences[key] = ls.get(preferences_prefix + key, default_value);
 
-        let onPreferenceChange = function (id, oldval, newval) {
+        var onPreferenceChange = function (id, oldval, newval) {
             dataToSync[preferences_prefix + id] = newval;
             if (!syncTimeout)
                 syncTimeout = setTimeout(syncDataToLS, syncTime);
             return newval;
         };
 
-        let onPreferenceRead = function (id) {
+        var onPreferenceRead = function (id) {
             preferences_template[id].used = true;
         };
 
@@ -202,13 +198,13 @@ function fetchData() {
         default_value = data_template[key].default_value;
         data[key] = ls.get(data_prefix + key, default_value);
 
-        let onDataChange = function (id, oldval, newval) {
+        var onDataChange = function (id, oldval, newval) {
             dataToSync[data_prefix + id] = newval;
             if (!syncTimeout)
                 syncTimeout = setTimeout(syncDataToLS, syncTime);
             return newval;
         };
-        let onDataRead = function (id) {
+        var onDataRead = function (id) {
             data_template[id].used = true;
         };
 
@@ -218,12 +214,12 @@ function fetchData() {
 
 window.addEventListener("storage", function (event) {
     try {
-        let varUsed = false;
+        let varUsed = false,
         varChanged = false,
         oldValue = (event.oldValue !== null) ? JSON.parse(event.oldValue) : null,
         newValue = (event.newValue !== null) ? JSON.parse(event.newValue) : null;
 
-        if (oldValue === newValue)
+        if (_.eq(oldValue, newValue))
             return;
 
         let key;
@@ -243,7 +239,7 @@ window.addEventListener("storage", function (event) {
         if (varUsed && varChanged && updateCallback !== undefined) {
             updateCallback();
         }
-    } catch (e) {
+    } catch(e) {
         console.error("Failed to call on the updateCallback.");
         console.error(e.message);
     }
