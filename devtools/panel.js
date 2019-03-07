@@ -1,34 +1,29 @@
-var tabURL;
-var cookieList = [];
+let tabURL,
+cookieList = [];
 
 var backgroundPageConnection = chrome.runtime.connect({
-    name: "devtools-page"
+  name: "devtools-page"
 });
 
 backgroundPageConnection.onMessage.addListener(function (message) {
-    if (message.action === "getall") {
-        createTable(message);
-    } else if (message.action === "refresh") {
-        location.reload(true);
-    }
-});
-
-$(document).ready(function () {
-    ++data.nPanelClicked;
-    start();
+  if (message.action === "getall") {
+    createTable(message);
+  } else if (message.action === "refresh") {
+    location.reload(true);
+  }
 });
 
 function start() {
-    var arguments = getUrlVars();
-    if (arguments.url !== undefined) {//TESTING PURPOSES
-        createList("https://google.com");
-        return;
-    }
-    var tabId = chrome.devtools.inspectedWindow.tabId;
-    backgroundPageConnection.postMessage({
-        action: "getall",
-        tabId: tabId
-    });
+  var arguments = getUrlVars();
+  if (arguments.url !== undefined) {//TESTING PURPOSES
+    createList("https://google.com");
+    return;
+  }
+  var tabId = chrome.devtools.inspectedWindow.tabId;
+  backgroundPageConnection.postMessage({
+    action: "getall",
+    tabId: tabId
+  });
 }
 
 function createList(url) {
@@ -44,63 +39,67 @@ function createList(url) {
 }
 
 function createTable(message) {
-    tabURL = message.url;
-    cookieList = message.cks;
+  let tblTpl = _.template('<div id="main"><table id="cookieTable" class="striped responsive-table"><thead><tr></tr></thead><tbody></tbody></table></div>'),
+  tr = [
+    "ID",
+    "Name",
+    "Value",
+    "Domain",
+    "Path",
+    "Expires",
+    "Session",
+    "HostOnly",
+    "Secure",
+    "HttpOnly",
+    "SameSite",
+    "StoreId"
+  ]
+  $('body').prepend(tblTpl)
+  _.forEach(tr,function(x){
+    $('#cookieTable > thead > tr').append('<th>'+ x +'</th>')
+  })
 
-    $tableBody = $("#cookieTable > tbody");
-    $tableBody.empty();
+  tabURL = message.url;
+  cookieList = message.cks;
 
-    for (var i = 0; i < cookieList.length; i++) {
-        currentC = cookieList[i];
+  $tableBody = $("#cookieTable > tbody");
+  $tableBody.empty();
 
-        var domainDisabled = (currentC.hostOnly) ? "disabled" : "";
-        var expirationDisabled = (currentC.session) ? "disabled" : "";
+  for (var i = 0; i < cookieList.length; i++) {
+    currentC = cookieList[i];
 
-        $row = $("<tr/>");
-        $row.append($("<td/>").addClass("hiddenColumn").text(i));
-        $row.append($("<td/>").text(currentC.name));
-        $row.append($("<td/>").text(currentC.value));
-        $row.append($("<td/>").addClass("domain " + domainDisabled).text(currentC.domain));
-        $row.append($("<td/>").text(currentC.path));
-
-        if (currentC.session) {
-            expDate = new Date();
-            expDate.setFullYear(expDate.getFullYear() + 1);
-        } else {
-            expDate = new Date(currentC.expirationDate * 1000.0);
-        }
-        $row.append($("<td/>").addClass("expiration " + expirationDisabled).text(expDate));
-
-        $row.append($("<td/>").text(currentC.session));
-        $row.append($("<td/>").text(currentC.hostOnly));
-        $row.append($("<td/>").text(currentC.secure));
-        $row.append($("<td/>").text(currentC.httpOnly));
-        $row.append($("<td/>").text(currentC.sameSite));
-        $row.append($("<td/>").addClass("hiddenColumn").text(currentC.name));
-        $row.append($("<td/>").addClass("hiddenColumn").text(currentC.storeId));
-        $tableBody.append($row);
+    var domainDisabled = (currentC.hostOnly) ? "disabled" : "";
+    var expirationDisabled = (currentC.session) ? "disabled" : "";
+    if (currentC.session) {
+        expDate = new Date();
+        expDate.setFullYear(expDate.getFullYear() + 1);
+    } else {
+        expDate = new Date(currentC.expirationDate * 1000.0);
     }
-    setEvents();
+    let td = [
+      i,
+      currentC.name,
+      currentC.value,
+      currentC.domain,
+      currentC.path,
+      expDate,
+      currentC.session,
+      currentC.hostOnly,
+      currentC.secure,
+      currentC.httpOnly,
+      currentC.sameSite,
+      currentC.storeId
+    ]
+
+    $row = $("<tr/>");
+    _.forEach(td,function(x){
+      $row.append($("<td/>").text(x));
+    })
+    $tableBody.append($row);
+  }
 }
 
-function setEvents() {
-  $(".sessionCB").click(function () {
-      var checked = $(this).prop("checked");
-      var $domain = $(".expiration", $(this).parent().parent()).first();
-      if (!!checked){
-          $domain.addClass("disabled");
-      } else {
-        $domain.removeClass("disabled");
-      }
-  });
-
-  $(".hostOnlyCB").click(function () {
-      var checked = $(this).prop("checked");
-      var $domain = $(".domain", $(this).parent().parent()).first();
-      if (!!checked){
-          $domain.addClass("disabled");
-      } else {
-        $domain.removeClass("disabled");
-      }
-  });
-}
+$(document).ready(function () {
+  ++data.nPanelClicked;
+  start();
+});
