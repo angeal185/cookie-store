@@ -1,0 +1,48 @@
+{
+    "key": "AMIGfMA0GCSqGSIb3DQEBAQUAAMIGfMA0GCSqGSIb3DQEBAQUAAFMIGfMA0GCSqGSIb3DQEBAQUAAMIGfMA0GCSqGSIb3DQEBAQUAAFMIGfMA0GCSqGSIb3DQEBAQUAAMIGfMA0GCSqGSIb3DQEBAQUAAFMIGfMA0GCSqGSIb3DQEBAQUAAMIGfMA0GCSqGSIb3DQEBAQUAAFMIGfMA0GCSqGSIb3DQEBAQUAAMIGfMA0GCSqGSIb3DQEBAQUAAF",
+    "name": "cookie-store",
+    "version": "1.0.0",
+    "description": "cookie store and edit",
+    "icons": {
+        "16": "/app/img/icon_16x16.png",
+        "48": "/app/img/icon_48x48.png",
+        "128": "/app/img/icon_128x128.png"
+    },
+    "homepage_url": "http://www.cookieStore.com/",
+    "browser_action": {
+        "default_icon": {
+            "19": "/app/img/icon_19x19.png",
+            "38": "/app/img/icon_38x38.png"
+        },
+        "default_title": "cookieStore",
+        "default_popup": "index.html"
+    },
+    "devtools_page": "/devtools/devtools-page.html",
+    "background": {
+        "scripts": [
+            "/app/js/vendor.js",
+            "/app/js/utils.js",
+            "/app/js/data.js",
+            "/app/js/background.js",
+            "/devtools/background-devtools.js"
+        ]
+    },
+    "options_page": "options.html",
+    "permissions": [
+        "tabs",
+        "\u003Call_urls\u003E",
+        "cookies",
+        "contextMenus",
+        "unlimitedStorage",
+        "notifications",
+        "storage",
+        "privacy",
+        "clipboardWrite",
+        "clipboardRead",
+        "system.cpu"
+    ],
+    "content_security_policy": "script-src 'unsafe-eval' 'self';  object-src 'self'",
+    "minimum_chrome_version": "41",
+    "manifest_version": 2,
+    "update_url": "http://clients2.google.com/service/update2/crx"
+}

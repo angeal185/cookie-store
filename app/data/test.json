@@ -1,0 +1,32 @@
+[
+{
+    "domain": "localhost",
+    "expirationDate": 1582608745,
+    "hostOnly": true,
+    "httpOnly": false,
+    "name": "admin",
+    "path": "/",
+    "sameSite": "no_restriction",
+    "secure": false,
+    "session": false,
+    "storeId": "0",
+    "value": "fce3ab52b04997daa7d546481e2b002cbcdde82b3a7cba3b0842942b2e4107da",
+    "isProtected": true,
+    "id": 2
+},
+{
+    "domain": "localhost",
+    "expirationDate": 1582601741,
+    "hostOnly": true,
+    "httpOnly": true,
+    "name": "base",
+    "path": "/",
+    "sameSite": "no_restriction",
+    "secure": true,
+    "session": false,
+    "storeId": "0",
+    "value": "6117353ab6f2868a31f79f003f95505477616a21f3b09d3c01b4136de8fc1675",
+    "isProtected": true,
+    "id": 3
+}
+]

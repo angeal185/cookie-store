@@ -1,0 +1,21 @@
+{
+  "dev":{
+    "html": "./dev/static/html",
+    "css": "./dev/static/css",
+    "img": "./dev/static/img",
+    "js": "./dev/static/js"
+  },
+  "prod": {
+    "css": "./app/css",
+    "img": "./app/img",
+    "js": "./app/js"
+  },
+  "files":{
+    "html": ["index", "options"],
+    "css": ["font-awesome", "materialize", "oxygen"],
+    "js": ["lodash", "jquery", "forge", "materialize", "fileSaver"],
+    "img": {
+        "png": ["icon_16x16", "icon_19x19", "icon_32x32", "icon_48x48", "icon_128x128", "logo"]
+      }
+  }
+}

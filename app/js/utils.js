@@ -1,0 +1,554 @@
+var canvasLoader;
+var crypt = {
+  sha256: function(i){
+    var md = forge.md.sha256.create();
+    md.update(i);
+    return md.digest().toHex();
+  },
+  sha512: function(i){
+    var md = forge.md.sha512.create();
+    md.update(i);
+    return md.digest().toHex();
+  },
+  gcmEnc: function(key, text){
+    let fu = forge.util,
+    iv = forge.random.getBytesSync(16),
+    cipher = forge.cipher.createCipher('AES-GCM', fu.hexToBytes(key));
+    cipher.start({
+      iv:iv
+    });
+    cipher.update(fu.createBuffer(fu.createBuffer(text, 'utf8')));
+    cipher.finish();
+    let final = _.join([
+      fu.bytesToHex(cipher.output.getBytes()),
+      fu.bytesToHex(iv),
+      fu.bytesToHex(cipher.mode.tag.getBytes())],':')
+    return final;
+  },
+  gcmDec: function(key,text){
+    let fu = forge.util,
+    sep = _.split(text,':', 3),
+    decipher = forge.cipher.createDecipher('AES-GCM', fu.hexToBytes(key));
+    decipher.start({
+      iv: fu.hexToBytes(sep[1]),
+      tag: fu.createBuffer(fu.hexToBytes(sep[2]))
+    });
+    decipher.update(fu.createBuffer(fu.hexToBytes(sep[0])));
+    decipher.finish();
+    return decipher.output.toString('utf8')
+  }
+}
+
+function buildUrl(domain, path, searchUrl) {
+    // Keep same protocol as searchUrl
+    // This fixes a bug when we want to unset 'secure' property in an https domain
+    var secure = searchUrl.indexOf("https://") === 0;
+
+    if (domain.substr(0, 1) === '.')
+        domain = domain.substring(1);
+
+    return "http" + ((secure) ? "s" : "") + "://" + domain + path;
+}
+
+function deleteAll(cookieList, searchUrl) {
+    for (var i = 0; i < cookieList.length; i++) {
+        var curr = cookieList[i];
+        var url = buildUrl(curr.domain, curr.path, searchUrl);
+        deleteCookie(url, curr.name, curr.storeId);
+    }
+}
+
+function deleteCookie(url, name, store, callback) {
+    chrome.cookies.remove({
+        'url': url,
+        'name': name,
+        'storeId': store
+    }, function (details) {
+        if (typeof callback === "undefined")
+            return;
+        if (details === "null" || details === undefined || details === "undefined") {
+            callback(false);
+        } else {
+            callback(true);
+        }
+    })
+}
+
+function Filter() {
+    var filter = {};
+
+    this.setUrl = function (url) {
+        filter.url = url;
+    };
+
+    this.setDomain = function (domain) {
+        filter.domain = domain;
+    };
+    this.setName = function (name) {
+        filter.name = name;
+    };
+    this.setSecure = function (secure) {
+        filter.secure = secure;
+    };
+    this.setSession = function (session) {
+        filter.session = session;
+    };
+    this.getFilter = function (session) {
+        return filter;
+    };
+}
+
+function cookieForCreationFromFullCookie(fullCookie) {
+    var newCookie = {};
+    //If no real url is available use: "https://" : "http://" + domain + path
+    newCookie.url = "http" + ((fullCookie.secure) ? "s" : "") + "://" + fullCookie.domain + fullCookie.path;
+    newCookie.name = fullCookie.name;
+    newCookie.value = fullCookie.value;
+    if (!fullCookie.hostOnly)
+        newCookie.domain = fullCookie.domain;
+    newCookie.path = fullCookie.path;
+    newCookie.secure = fullCookie.secure;
+    newCookie.httpOnly = fullCookie.httpOnly;
+    if (!fullCookie.session)
+        newCookie.expirationDate = fullCookie.expirationDate;
+    newCookie.storeId = fullCookie.storeId;
+    return newCookie;
+}
+
+function compareCookies(b, a) {
+    try {
+        if (b.name !== a.name)
+            return false;
+        if (b.value !== a.value)
+            return false;
+        if (b.path !== a.path)
+            return false;
+        if (b.secure !== a.secure)
+            return false;
+        if (b.httpOnly !== a.httpOnly)
+            return false;
+
+        var aHostOnly = !!(a.hostOnly || a.domain === undefined);
+        var bHostOnly = !!(b.hostOnly || b.domain === undefined);
+        if (aHostOnly !== bHostOnly)
+            return false;
+        if (!aHostOnly && b.domain !== a.domain)
+            return false;
+
+        var aSession = !!(a.session || a.expirationDate === undefined);
+        var bSession = !!(b.session || b.expirationDate === undefined);
+        if (aSession !== bSession)
+            return false;
+        if (aSession === false && b.expirationDate !== a.expirationDate)
+            return false;
+    } catch (e) {
+        console.error(e.message);
+        return false;
+    }
+    return true;
+}
+
+var cookiesToString = {
+
+    "get": function (cookies, url) {
+        if (cookiesToString[preferences.copyCookiesType] !== undefined && cookies.length > 0)
+            return cookiesToString[preferences.copyCookiesType](cookies, url);
+        else
+            return undefined;
+    },
+
+    "netscape": function (cookies, url) {
+        var string = "";
+        string += "# Netscape HTTP Cookie File\n";
+        string += "# http://curl.haxx.se/rfc/cookie_spec.html\n";
+        string += "# This file was generated by cookieStore\n";
+        if (url !== undefined)
+            string += "# URL: " + url + "\n";
+        for (var i = 0; i < cookies.length; i++) {
+            cookie = cookies[i];
+            string += cookie.domain + "\t" +
+                (!cookie.hostOnly).toString().toUpperCase() + "\t" +
+                cookie.path + "\t" +
+                cookie.secure.toString().toUpperCase() + "\t" +
+                (cookie.expirationDate ? Math.round(cookie.expirationDate) : "0") + "\t" +
+                cookie.name + "\t" +
+                cookie.value + ((i === cookies.length - 1) ? "" : "\n");
+
+        }
+        return string;
+    },
+
+    "json": function (cookies, url) {
+        var string = "";
+        string += "[\n";
+        for (var i = 0; i < cookies.length; i++) {
+            cookie = cookies[i];
+            cookie.id = i + 1;
+            string += JSON.stringify(cookie, null, 4);
+            if (i < cookies.length - 1)
+                string += ",\n";
+        }
+        string += "\n]";
+        return string;
+    },
+
+    "semicolonPairs": function (cookies, url) {
+        var string = "";
+        string += "// Semicolon separated Cookie File\n";
+        string += "// This file was generated by cookieStore\n";
+        string += "// Details: http://www.ietf.org/rfc/rfc2109.txt\n"
+        string += "// Example: http://www.tutorialspoint.com/javascript/javascript_cookies.htm\n"
+        if (url !== undefined)
+            string += "// URL: " + url + "\n";
+        for (var i = 0; i < cookies.length; i++) {
+            cookie = cookies[i];
+            string += cookie.name + "=" + cookie.value + ";";
+
+        }
+        return string;
+    },
+
+    "lpw": function (cookies, url) {
+        var string = "";
+        string += "// Semicolon separated Cookie File\n";
+        string += "// This file was generated by cookieStore\n";
+        string += "// Details: http://www.cookiecentral.com/faq/#3.5\n"
+        string += "// Example: http://www.tutorialspoint.com/javascript/javascript_cookies.htm\n"
+        if (url !== undefined)
+            string += "// URL: " + url + "\n";
+        for (var i = 0; i < cookies.length; i++) {
+            cookie = cookies[i];
+            string += 'Set-Cookie3: ' + cookie.name + '=' + cookie.value + '; path="/"; domain=' + cookie.domain + '; path_spec; expires="' + (cookie.expirationDate ? cookie.expirationDate : "0") + '"; version=0\n';
+        }
+        return string;
+    }
+};
+
+function saveData(i,e,x){
+  $(i).off().on('click', function(event) {
+    try{
+      let file = new File([JSON.stringify(x)],
+      e + '.json', {
+        type: "text/plain;charset=utf-8"
+      });
+      saveAs(file);
+    }catch(e){
+      if (e){ return alert('invalid JSON') }
+    }
+  })
+}
+
+function encryptItems(data){
+  let arr = ['domain', 'expirationDate', 'name', 'path', 'sameSite', 'value'],
+  count = 0;
+  _.forEach(data, function(x){
+    if(!x.encrypted){
+      _.forEach(arr, function(y){
+        x[y] = crypt.gcmEnc(sessionStorage.getItem('token'), x[y])
+      })
+      x.encrypted = true;
+      console.log(x.id + ' encrypted')
+      count++
+    } else{
+      console.log(x.id + ' already encrypted')
+    }
+  })
+  return [data,count];
+}
+//console.log(decSingle(keyss,encSingle(keyss, examp)))
+
+function encSingle(key, item){
+  let obj = {};
+  _.forIn(item, function(i,e){
+    if(!_.eq(e,'id')){
+      obj[e] = crypt.gcmEnc(key, i)
+    }
+  })
+  obj.id = item.id;
+  return obj;
+}
+
+function decSingle(key, item){
+  let obj = {};
+  _.forIn(item, function(i,e){
+    if(!_.eq(e,'id')){
+      obj[e] = crypt.gcmDec(key, i)
+    }
+  })
+  _.forEach(obj,function(i){
+
+
+  })
+  obj.id = item.id;
+  return obj;
+}
+
+
+function minJSON(item,editor){
+  $(item).off().on('click', function() {
+    try {
+      let data = JSON.parse(editor.getValue());
+      return editor.setValue(JSON.stringify(data))
+    } catch(e){
+      if (e) { return alert('invalid json')}
+    }
+  })
+}
+
+function maxJSON(i,e){
+  $(i).off().on('click', function() {
+    try {
+      let data = JSON.parse(e.getValue());
+      return e.setValue(JSON.stringify(data,0,2))
+    } catch(x){
+      if (x) { return alert('invalid json')}
+    }
+  })
+}
+
+//privacy
+function initPrivacy(){
+  chrome.privacy.services.autofillAddressEnabled.set({value: false})
+  chrome.privacy.services.autofillCreditCardEnabled.set({value: false})
+  chrome.privacy.services.autofillEnabled.set({value: false})
+  chrome.privacy.services.passwordSavingEnabled.set({value: false})
+  chrome.privacy.services.searchSuggestEnabled.set({value: false})
+  chrome.privacy.services.spellingServiceEnabled.set({value: false})
+  chrome.privacy.services.translationServiceEnabled.set({value: false})
+}
+
+initPrivacy()
+
+//console.log(chrome.privacy)
+
+
+/*
+chrome.privacy.services.autofillEnabled.get({}, function(details) {
+        if (details.value)
+          console.log('Autofill is on!');
+        else
+          console.log('Autofill is off!');
+      });
+*/
+
+if (!Object.prototype.watch) {
+	Object.defineProperty(Object.prototype, "watch", {
+		  enumerable: false,
+      configurable: true,
+      writable: false,
+      value: function (prop, writeHandler, readHandler) {
+			var oldval = this[prop],
+      newval = oldval,
+      getter = function () {
+				if(readHandler != undefined)
+					readHandler.call(this, prop);
+				return newval;
+			},
+      setter = function (val) {
+				oldval = newval;
+				return newval = writeHandler.call(this, prop, oldval, val);
+			};
+
+			if (delete this[prop]) { // can't watch constants
+				Object.defineProperty(this, prop, {
+					  get: getter,
+            set: setter,
+            enumerable:true,
+            configurable: true
+				});
+			}
+		}
+	});
+}
+
+// object.unwatch
+if (!Object.prototype.unwatch) {
+	Object.defineProperty(Object.prototype, "unwatch", {
+		  enumerable: false,
+      configurable: true,
+      writable: false,
+      value: function (prop) {
+			var val = this[prop];
+			delete this[prop]; // remove accessors
+			this[prop] = val;
+		}
+	});
+}
+
+Array.prototype.toTop = function (a) {
+    var c;
+    if (a <= 0 || a >= this.length) {
+        return false
+    }
+    c = this[a];
+    for (var b = a; b > 0; b--) {
+        this[b] = this[b - 1]
+    }
+    this[0] = c;
+    return true
+};
+
+function getHost(url) {
+    return (url.match(/:\/\/(.[^:/]+)/)[1]).replace("www.", "")
+}
+
+function addBlockRule(rule) {
+    var dfilters = data.filters;
+    for (var x = 0; x < dfilters.length; x++) {
+        var currFilter = dfilters[x];
+        if ((currFilter.domain !== null) === (rule.domain !== null)) {
+            if (currFilter.domain !== rule.domain) {
+                continue
+            }
+        } else {
+            continue
+        }
+        if ((currFilter.name !== null) === (rule.name !== null)) {
+            if (currFilter.name !== rule.name) {
+                continue;
+            }
+        } else {
+            continue;
+        }
+        if ((currFilter.value !== null) === (rule.value !== null)) {
+            if (currFilter.value !== rule.value) {
+                continue;
+            }
+        } else {
+            continue;
+        }
+        return x;
+    }
+    dfilters[dfilters.length] = rule;
+    data.filters = dfilters;
+    filterURL = {};
+
+    if (rule.name !== undefined) {
+        filterURL.name = rule.name
+    }
+    if (rule.value !== undefined) {
+        filterURL.value = rule.value
+    }
+    if (rule.domain !== undefined) {
+        filterURL.domain = rule.domain
+    }
+    chrome.cookies.getAll({}, function (cookieL) {
+        for (var x = 0; x < cookieL.length; x++) {
+            var cCookie = cookieL[x];
+            if (filterMatchesCookie(filterURL, cCookie.name, cCookie.domain, cCookie.value)) {
+                var cUrl = (cCookie.secure) ? "https://" : "http://" + cCookie.domain + cCookie.path;
+                deleteCookie(cUrl, cCookie.name, cCookie.storeId, cCookie)
+            }
+        }
+    });
+}
+
+function switchReadOnlyRule(rule) {
+    var added = true;
+    var readOnlyList = data.readOnly;
+    for (var x = 0; x < readOnlyList.length; x++) {
+        try {
+            var cRule = readOnlyList[x];
+            if (cRule.domain === rule.domain && cRule.name === rule.name && cRule.path === rule.path) {
+                added = false;
+                readOnlyList.splice(x, 1)
+            }
+        } catch (e) {
+            console.error(e.message);
+        }
+    }
+    if (added) {
+        readOnlyList[readOnlyList.length] = rule
+    }
+    data.readOnly = readOnlyList;
+    return !!added;
+}
+
+function deleteReadOnlyRule(toDelete) {
+    readOnlyList = data.readOnly;
+    readOnlyList.splice(toDelete, 1);
+    data.readOnly = readOnlyList;
+}
+
+function deleteBlockRule(toDelete) {
+    filtersList = data.filters;
+    filtersList.splice(toDelete, 1);
+    data.filters = filtersList;
+}
+
+function filterMatchesCookie(rule, name, domain, value) {
+    var ruleDomainReg = new RegExp(rule.domain);
+    var ruleNameReg = new RegExp(rule.name);
+    var ruleValueReg = new RegExp(rule.value);
+    if (rule.domain !== undefined && domain.match(ruleDomainReg) === null) {
+        return false;
+    }
+    if (rule.name !== undefined && name.match(ruleNameReg) === null) {
+        return false;
+    }
+    if (rule.value !== undefined && value.match(ruleValueReg) === null) {
+        return false;
+    }
+    return true;
+}
+
+function getUrlVars() {
+    var d = [], c;
+    var a = window.location.href.slice(window.location.href.indexOf("?") + 1).split("&");
+    for (var b = 0; b < a.length; b++) {
+        c = a[b].split("=");
+        d.push(c[0]);
+        d[c[0]] = c[1]
+    }
+    return d
+}
+
+function showPopup(info, tab) {
+    var tabUrl = encodeURI(tab.url);
+    var tabID = encodeURI(tab.id);
+    var tabIncognito = encodeURI(tab.incognito);
+
+    var urlToOpen = chrome.extension.getURL("index.html") + "?url=" + tabUrl + "&id=" + tabID + "&incognito=" + tabIncognito;
+
+    chrome.tabs.query({ 'windowId': chrome.windows.WINDOW_ID_CURRENT }, function (tabList) {
+        for (var x = 0; x < tabList.length; x++) {
+            var cTab = tabList[x];
+            if (cTab.url.indexOf(urlToOpen) === 0) {
+                chrome.tabs.update(cTab.id, {
+                    'selected': true
+                });
+                return
+            }
+        }
+        chrome.tabs.create({
+            'url': urlToOpen
+        })
+    })
+}
+
+function copyToClipboard(text) {
+    if (text === undefined)
+        return;
+
+    //Appending an element causes the window to scroll...so we save the scroll position and restore it later
+    var scrollsave = $('body').scrollTop();
+
+    var copyDiv = document.createElement('textarea');
+    copyDiv.style.height = "0.5px";
+    document.body.appendChild(copyDiv, document.body.firstChild);
+    $(copyDiv).text(text);
+    copyDiv.focus();
+    copyDiv.select();
+    document.execCommand("copy");
+    document.body.removeChild(copyDiv);
+
+    $('body').scrollTop(scrollsave);
+}
+
+function setLoaderVisible(visible) {
+    if (visible) {
+        $("#loader-container").show();
+    } else {
+        $("#loader-container").hide();
+    }
+}
