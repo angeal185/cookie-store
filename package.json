@@ -1,7 +1,7 @@
 {
   "name": "cookie-store",
   "version": "1.0.0",
-  "description": "",
+  "description": "chrome extension for cookie crud on a per site basis with user login and encrypted storage",
   "main": "index.js",
   "dependencies": {},
   "devDependencies": {

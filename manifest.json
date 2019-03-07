@@ -1,20 +1,20 @@
 {
-    "key": "AMIGfMA0GCSqGSIb3DQEBAQUAAMIGfMA0GCSqGSIb3DQEBAQUAAFMIGfMA0GCSqGSIb3DQEBAQUAAMIGfMA0GCSqGSIb3DQEBAQUAAFMIGfMA0GCSqGSIb3DQEBAQUAAMIGfMA0GCSqGSIb3DQEBAQUAAFMIGfMA0GCSqGSIb3DQEBAQUAAMIGfMA0GCSqGSIb3DQEBAQUAAFMIGfMA0GCSqGSIb3DQEBAQUAAMIGfMA0GCSqGSIb3DQEBAQUAAF",
+    "key": "DEMODEMODEMODEMODEMODEMODEMODEMODEMODEMODEMODEMODEMODEMODEMODEMODEMODEMODEMODEMODEMODEMODEMODEMODEMODEMODEMODEMODEMODEMODEMODEMODEMODEMODEMODEMODEMODEMODEMODEMODEMODEMODEMODEMODEMODEMODEMODEMODEMODEMODEMODEMODEMODEMODEMODEMODEMODEMODEMODEMODEMODEMODEMODEMO",
     "name": "cookie-store",
     "version": "1.0.0",
-    "description": "cookie store and edit",
+    "description": "chrome extension for cookie crud on a per site basis with user login and encrypted storage",
     "icons": {
         "16": "/app/img/icon_16x16.png",
         "48": "/app/img/icon_48x48.png",
         "128": "/app/img/icon_128x128.png"
     },
-    "homepage_url": "http://www.cookieStore.com/",
+    "homepage_url": "https://github.com/angeal185/cookie-store",
     "browser_action": {
         "default_icon": {
             "19": "/app/img/icon_19x19.png",
             "38": "/app/img/icon_38x38.png"
         },
-        "default_title": "cookieStore",
+        "default_title": "cookie-store",
         "default_popup": "index.html"
     },
     "devtools_page": "/devtools/devtools-page.html",
