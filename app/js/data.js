@@ -5,7 +5,7 @@ const preferences_template = {
         "default_value": false
     },
     "showAnimate": {
-        "default_value": false
+        "default_value": true
     },
     // Show labels in the popup window next to some of the buttons
     "showCommandsLabels": {
