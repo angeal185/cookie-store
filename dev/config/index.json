@@ -1,0 +1,10 @@
+{
+  "minHTML": {
+    "minifyCSS": true,
+    "minifyJS": true,
+    "removeStyleLinkTypeAttributes": true,
+    "useShortDoctype": true,
+    "minifyURLs": true,
+    "collapseWhitespace": true
+  }
+}

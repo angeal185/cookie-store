@@ -3,4 +3,7 @@ _ = require('lodash'),
 chokidar = require('chokidar'),
 watch = require('./dev/utils/watch');
 
-watch.minHTML()
+
+
+watch.watchCSS()
+watch.watchHTML()
