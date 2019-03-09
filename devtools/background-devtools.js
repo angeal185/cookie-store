@@ -1,19 +1,19 @@
 console.log("Starting background-devtools");
 
 chrome.runtime.onConnect.addListener(function (port) {
-    if (port.name != "devtools-page") {
-      return;
+  if (!_.eq(port.name, "devtools-page")) {
+    return;
+  }
+  let devToolsListener = function (message, sender, sendResponse) {
+    let action = message.action;
+    if (_.eq(action, "getall")) {
+        getAll(port, message);
     }
-    let devToolsListener = function (message, sender, sendResponse) {
-      var action = message.action;
-      if (action === "getall") {
-          getAll(port, message);
-      }
-    };
-    port.onMessage.addListener(devToolsListener);
-    port.onDisconnect.addListener(function () {
-      port.onMessage.removeListener(devToolsListener);
-    });
+  };
+  port.onMessage.addListener(devToolsListener);
+  port.onDisconnect.addListener(function () {
+    port.onMessage.removeListener(devToolsListener);
+  });
 });
 
 function issueRefresh(port) {

@@ -1,0 +1,93 @@
+{
+  "options": {
+    "showAlerts": {
+      "default_value": false
+    },
+    "showAnimate": {
+      "default_value": true
+    },
+    "showCommandsLabels": {
+      "default_value": false
+    },
+    "showDomain": {
+      "default_value": true
+    },
+    "showDomainBeforeName": {
+      "default_value": true
+    },
+    "showFlagAndDeleteAll": {
+      "default_value": false
+    },
+    "showContextMenu": {
+      "default_value": true
+    },
+    "refreshAfterSubmit": {
+      "default_value": false
+    },
+    "skipCacheRefresh": {
+      "default_value": true
+    },
+    "useMaxCookieAge": {
+      "default_value": false
+    },
+    "maxCookieAgeType": {
+      "default_value": -1
+    },
+    "maxCookieAge": {
+      "default_value": 1
+    },
+    "copyCookiesType": {
+      "default_value": "json"
+    },
+    "sortCookiesType": {
+      "default_value": "domain_alpha"
+    },
+    "showDevToolsPanel": {
+      "default_value": false
+    },
+    "privacyMode": {
+      "default_value": true
+    }
+  },
+  "defaults": {
+    "filters": {
+      "default_value": []
+    },
+    "readOnly": {
+      "default_value": []
+    },
+    "nCookiesCreated": {
+      "default_value": 0
+    },
+    "nCookiesChanged": {
+      "default_value": 0
+    },
+    "nCookiesDeleted": {
+      "default_value": 0
+    },
+    "nCookiesProtected": {
+      "default_value": 0
+    },
+    "nCookiesFlagged": {
+      "default_value": 0
+    },
+    "nCookiesShortened": {
+      "default_value": 0
+    },
+    "nPopupClicked": {
+      "default_value": 0
+    },
+    "nPanelClicked": {
+      "default_value": 0
+    },
+    "nCookiesImported": {
+      "default_value": 0
+    },
+    "nCookiesExported": {
+      "default_value": 0
+    },
+    "lastVersionRun": {
+      "default_value": null
+    }
+  }
+}

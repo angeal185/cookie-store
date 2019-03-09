@@ -1,6 +1,5 @@
 _.templateSettings.interpolate = /{{([\s\S]+?)}}/g;
 
-let csl = chrome.storage.local;
 
 const div = $('<div />'),
 li = $('<li />'),
@@ -42,7 +41,7 @@ const opts = {
   main:{
     cookieTable:['domain','path', 'storeId', 'expiration'],
     newCookieTable:['name', 'domain','path', 'expiration'],
-    select:['noRestriction','lax','strict'],
+    select:['no_restriction','lax','strict'],
     r1: ['hostOnly','session','secure','httpOnly'],
     cookieFilter:[{
       class: 'filterDomain',
@@ -102,6 +101,7 @@ const opts = {
     showAlerts: 'Always ask for confirmation',
     showCommandsLabels: 'Show labels next to icons',
     showAnimate: 'Show animated background',
+    privacyMode: 'enable private mode',
     refreshAfterSubmit: 'Reload the page after submitting the changes',
     skipCacheRefresh: 'Skip the cache when page reloads',
     showContextMenu: 'Show "Edit Cookies" in contextual menu',
@@ -134,7 +134,6 @@ const opts = {
     confirm: 'password'
   }
 }
-
 
 //main
 function buildTpl(){
@@ -599,7 +598,8 @@ function toasty(i){
   }, 2500);
 }
 
-
+/*
 chrome.runtime.getPlatformInfo(function(i){
   console.log(i)
 })
+*/

@@ -25,15 +25,14 @@ function start() {
 }
 
 function createList(url) {
-    tabURL = url;
-    chrome.cookies.getAll({
-        url: tabURL
-    }, function (cks) {
-        createTable({
-            url: tabURL,
-            cks: cks
-        });
+  chrome.cookies.getAll({
+    url: url
+  }, function (cks) {
+    createTable({
+      url: url,
+      cks: cks
     });
+  });
 }
 
 function createTable(message) {
@@ -66,8 +65,8 @@ function createTable(message) {
   for (var i = 0; i < cookieList.length; i++) {
     currentC = cookieList[i];
 
-    var domainDisabled = (currentC.hostOnly) ? "disabled" : "";
-    var expirationDisabled = (currentC.session) ? "disabled" : "";
+    let domainDisabled = (currentC.hostOnly) ? "disabled" : "",
+    expirationDisabled = (currentC.session) ? "disabled" : "";
     if (currentC.session) {
         expDate = new Date();
         expDate.setFullYear(expDate.getFullYear() + 1);

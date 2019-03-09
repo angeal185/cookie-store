@@ -1,4 +1,7 @@
-let showContextMenu = undefined;
+let showContextMenu = undefined,
+currentVersion = chrome.runtime.getManifest().version,
+oldVersion = data.lastVersionRun;
+data.lastVersionRun = currentVersion;
 
 updateCallback = function () {
   if (!_.eq(showContextMenu, preferences.showContextMenu)) {
@@ -8,15 +11,8 @@ updateCallback = function () {
   chrome.browserAction.setIcon({ "path": "/app/img/icon_19x19.png" });
 };
 
-
-
-let currentVersion = chrome.runtime.getManifest().version,
-oldVersion = data.lastVersionRun;
-
-data.lastVersionRun = currentVersion;
-
 if (!_.eq(oldVersion, currentVersion)) {
-  if (_.isUndefined(oldVersion)) { //Is firstrun
+  if (_.isNull(oldVersion)) { //Is firstrun
     chrome.tabs.create({
       url: 'https://github.com/angeal185/cookie-store/'
     });
@@ -51,9 +47,7 @@ chrome.cookies.onChanged.addListener(function(changeInfo) {
   if (_.eq(cause, "expired") || _.eq(cause, "evicted")){
     return;
   }
-
-  console.log(data)
-
+  //console.log(data)
   for (var i = 0; i < data.readOnly.length; i++) {
     let currentRORule = data.readOnly[i];
     if (compareCookies(cookie, currentRORule)) {
@@ -96,17 +90,17 @@ chrome.cookies.onChanged.addListener(function(changeInfo) {
     }
   }
 
-  if (!removed && preferences.useMaxCookieAge && preferences.maxCookieAgeType > 0) { //Check expiration, if too far in the future shorten on user's preference
+  if (!removed && preferences.useMaxCookieAge && _.gt(preferences.maxCookieAgeType, 0)) { //Check expiration, if too far in the future shorten on user's preference
     let maxAllowedExpiration = Math.round((new Date).getTime() / 1000) + (preferences.maxCookieAge * preferences.maxCookieAgeType);
     if (!_.isUndefined(cookie.expirationDate) && _.gt(cookie.expirationDate, maxAllowedExpiration + 60)) {
-        let newCookie = cookieForCreationFromFullCookie(cookie);
-        if (!cookie.session){
-          newCookie.expirationDate = maxAllowedExpiration;
-        }
-        chrome.cookies.set(newCookie);
-        ++data.nCookiesShortened;
+      let newCookie = cookieForCreationFromFullCookie(cookie);
+      if (!cookie.session){
+        newCookie.expirationDate = maxAllowedExpiration;
+      }
+      chrome.cookies.set(newCookie);
+      ++data.nCookiesShortened;
     }
-}
+  }
 });
 
 function setContextMenu(show) {

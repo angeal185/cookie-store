@@ -76,11 +76,9 @@ function deleteCookie(url, name, store, callback) {
 
 function Filter() {
     var filter = {};
-
     this.setUrl = function (url) {
         filter.url = url;
     };
-
     this.setDomain = function (domain) {
         filter.domain = domain;
     };
@@ -116,36 +114,48 @@ function cookieForCreationFromFullCookie(fullCookie) {
 }
 
 function compareCookies(b, a) {
-    try {
-        if (b.name !== a.name)
-            return false;
-        if (b.value !== a.value)
-            return false;
-        if (b.path !== a.path)
-            return false;
-        if (b.secure !== a.secure)
-            return false;
-        if (b.httpOnly !== a.httpOnly)
-            return false;
-
-        var aHostOnly = !!(a.hostOnly || a.domain === undefined);
-        var bHostOnly = !!(b.hostOnly || b.domain === undefined);
-        if (aHostOnly !== bHostOnly)
-            return false;
-        if (!aHostOnly && b.domain !== a.domain)
-            return false;
-
-        var aSession = !!(a.session || a.expirationDate === undefined);
-        var bSession = !!(b.session || b.expirationDate === undefined);
-        if (aSession !== bSession)
-            return false;
-        if (aSession === false && b.expirationDate !== a.expirationDate)
-            return false;
-    } catch (e) {
-        console.error(e.message);
-        return false;
+  try {
+    if (!_.eq(b.name,a.name)){
+      return false;
     }
-    return true;
+    if (!_.eq(b.value,a.value)){
+      return false;
+    }
+    if (!_.eq(b.path,a.path)){
+      return false;
+    }
+    if (!_.eq(b.secure,a.secure)){
+      return false;
+    }
+    if (!_.eq(b.httpOnly,a.httpOnly)){
+      return false;
+    }
+
+    let aHostOnly = !!(a.hostOnly || _.isUndefined(a.domain));
+    let bHostOnly = !!(b.hostOnly || _.isUndefined(b.domain));
+
+    if (!_.eq(aHostOnly,bHostOnly)){
+      return false;
+    }
+    if (!aHostOnly && !_.eq(b.domain,a.domain)){
+      return false;
+    }
+    let aSession = !!(a.session || _.isUndefined(a.expirationDate));
+    let bSession = !!(b.session || _.isUndefined(b.expirationDate));
+
+    if (!_.eq(aSession,bSession)){
+      return false;
+    }
+
+    if (_.eq(aSession,false) && !_.eq(b.expirationDate,a.expirationDate)) {
+      return false;
+    }
+
+  } catch (e) {
+    console.error(e.message);
+    return false;
+  }
+  return true;
 }
 
 var cookiesToString = {
@@ -277,7 +287,6 @@ function decSingle(key, item){
   })
   _.forEach(obj,function(i){
 
-
   })
   obj.id = item.id;
   return obj;
@@ -306,30 +315,34 @@ function maxJSON(i,e){
   })
 }
 
-//privacy
+//enable privacy
 function initPrivacy(){
-  chrome.privacy.services.autofillAddressEnabled.set({value: false})
-  chrome.privacy.services.autofillCreditCardEnabled.set({value: false})
-  chrome.privacy.services.autofillEnabled.set({value: false})
-  chrome.privacy.services.passwordSavingEnabled.set({value: false})
-  chrome.privacy.services.searchSuggestEnabled.set({value: false})
-  chrome.privacy.services.spellingServiceEnabled.set({value: false})
-  chrome.privacy.services.translationServiceEnabled.set({value: false})
-}
+  let cps = chrome.privacy.services,
+  arr = [
+    'autofillAddressEnabled',
+    'autofillCreditCardEnabled',
+    'autofillEnabled',
+    'passwordSavingEnabled',
+    'searchSuggestEnabled',
+    'spellingServiceEnabled',
+    'translationServiceEnabled'
+  ]
 
-initPrivacy()
-
-//console.log(chrome.privacy)
-
-
-/*
-chrome.privacy.services.autofillEnabled.get({}, function(details) {
-        if (details.value)
-          console.log('Autofill is on!');
-        else
-          console.log('Autofill is off!');
+  _.forEach(arr, function(i){
+    try{
+      cps[i].set({value: false})
+      cps[i].get({}, function(x) {
+        if (x.value){
+          console.log(i + ' not disabled!')
+        } else {
+          console.log(i + ' disabled')
+        }
       });
-*/
+    } catch(e){
+      if (e) { console.log(i + ' not disabled!') }
+    }
+  })
+}
 
 if (!Object.prototype.watch) {
 	Object.defineProperty(Object.prototype, "watch", {
@@ -376,179 +389,174 @@ if (!Object.prototype.unwatch) {
 }
 
 Array.prototype.toTop = function (a) {
-    var c;
-    if (a <= 0 || a >= this.length) {
-        return false
-    }
-    c = this[a];
-    for (var b = a; b > 0; b--) {
-        this[b] = this[b - 1]
-    }
-    this[0] = c;
-    return true
+  let c;
+  if (a <= 0 || a >= this.length) {
+    return false
+  }
+  c = this[a];
+  for (var b = a; b > 0; b--) {
+    this[b] = this[b - 1]
+  }
+  this[0] = c;
+  return true
 };
 
 function getHost(url) {
-    return (url.match(/:\/\/(.[^:/]+)/)[1]).replace("www.", "")
+  return (url.match(/:\/\/(.[^:/]+)/)[1]).replace("www.", "")
 }
 
 function addBlockRule(rule) {
-    var dfilters = data.filters;
-    for (var x = 0; x < dfilters.length; x++) {
-        var currFilter = dfilters[x];
-        if ((currFilter.domain !== null) === (rule.domain !== null)) {
-            if (currFilter.domain !== rule.domain) {
-                continue
-            }
-        } else {
-            continue
-        }
-        if ((currFilter.name !== null) === (rule.name !== null)) {
-            if (currFilter.name !== rule.name) {
-                continue;
-            }
-        } else {
-            continue;
-        }
-        if ((currFilter.value !== null) === (rule.value !== null)) {
-            if (currFilter.value !== rule.value) {
-                continue;
-            }
-        } else {
-            continue;
-        }
-        return x;
+  let dfilters = data.filters;
+  for (var x = 0; x < dfilters.length; x++) {
+    var currFilter = dfilters[x];
+    if ((currFilter.domain !== null) === (rule.domain !== null)) {
+      if (currFilter.domain !== rule.domain) {
+        continue
+      }
+    } else {
+      continue
     }
-    dfilters[dfilters.length] = rule;
-    data.filters = dfilters;
-    filterURL = {};
+    if ((currFilter.name !== null) === (rule.name !== null)) {
+      if (currFilter.name !== rule.name) {
+        continue;
+      }
+    } else {
+      continue;
+    }
+    if ((currFilter.value !== null) === (rule.value !== null)) {
+      if (currFilter.value !== rule.value) {
+        continue;
+      }
+    } else {
+      continue;
+    }
+    return x;
+  }
+  dfilters[dfilters.length] = rule;
+  data.filters = dfilters;
+  filterURL = {};
 
-    if (rule.name !== undefined) {
-        filterURL.name = rule.name
+  if (!_.isUndefined(rule.name)) {
+    filterURL.name = rule.name
+  }
+  if (!_.isUndefined(rule.value)) {
+    filterURL.value = rule.value
+  }
+  if (!_.isUndefined(rule.domain)) {
+    filterURL.domain = rule.domain
+  }
+  chrome.cookies.getAll({}, function (cookieL) {
+    for (var x = 0; x < cookieL.length; x++) {
+      let cCookie = cookieL[x];
+      if (filterMatchesCookie(filterURL, cCookie.name, cCookie.domain, cCookie.value)) {
+        var cUrl = (cCookie.secure) ? "https://" : "http://" + cCookie.domain + cCookie.path;
+        deleteCookie(cUrl, cCookie.name, cCookie.storeId, cCookie)
+      }
     }
-    if (rule.value !== undefined) {
-        filterURL.value = rule.value
-    }
-    if (rule.domain !== undefined) {
-        filterURL.domain = rule.domain
-    }
-    chrome.cookies.getAll({}, function (cookieL) {
-        for (var x = 0; x < cookieL.length; x++) {
-            var cCookie = cookieL[x];
-            if (filterMatchesCookie(filterURL, cCookie.name, cCookie.domain, cCookie.value)) {
-                var cUrl = (cCookie.secure) ? "https://" : "http://" + cCookie.domain + cCookie.path;
-                deleteCookie(cUrl, cCookie.name, cCookie.storeId, cCookie)
-            }
-        }
-    });
+  });
 }
 
 function switchReadOnlyRule(rule) {
-    var added = true;
-    var readOnlyList = data.readOnly;
-    for (var x = 0; x < readOnlyList.length; x++) {
-        try {
-            var cRule = readOnlyList[x];
-            if (cRule.domain === rule.domain && cRule.name === rule.name && cRule.path === rule.path) {
-                added = false;
-                readOnlyList.splice(x, 1)
-            }
-        } catch (e) {
-            console.error(e.message);
-        }
+  var added = true;
+  var readOnlyList = data.readOnly;
+  for (var x = 0; x < readOnlyList.length; x++) {
+    try {
+      var cRule = readOnlyList[x];
+      if (cRule.domain === rule.domain && cRule.name === rule.name && cRule.path === rule.path) {
+        added = false;
+        readOnlyList.splice(x, 1)
+      }
+    } catch (e) {
+      console.error(e.message);
     }
-    if (added) {
-        readOnlyList[readOnlyList.length] = rule
-    }
-    data.readOnly = readOnlyList;
-    return !!added;
+  }
+  if (added) {
+    readOnlyList[readOnlyList.length] = rule
+  }
+  data.readOnly = readOnlyList;
+  return !!added;
 }
 
 function deleteReadOnlyRule(toDelete) {
-    readOnlyList = data.readOnly;
-    readOnlyList.splice(toDelete, 1);
-    data.readOnly = readOnlyList;
+  readOnlyList = data.readOnly;
+  readOnlyList.splice(toDelete, 1);
+  data.readOnly = readOnlyList;
 }
 
 function deleteBlockRule(toDelete) {
-    filtersList = data.filters;
-    filtersList.splice(toDelete, 1);
-    data.filters = filtersList;
+  filtersList = data.filters;
+  filtersList.splice(toDelete, 1);
+  data.filters = filtersList;
 }
 
 function filterMatchesCookie(rule, name, domain, value) {
-    var ruleDomainReg = new RegExp(rule.domain);
-    var ruleNameReg = new RegExp(rule.name);
-    var ruleValueReg = new RegExp(rule.value);
-    if (rule.domain !== undefined && domain.match(ruleDomainReg) === null) {
-        return false;
-    }
-    if (rule.name !== undefined && name.match(ruleNameReg) === null) {
-        return false;
-    }
-    if (rule.value !== undefined && value.match(ruleValueReg) === null) {
-        return false;
-    }
+  let ruleDomainReg = new RegExp(rule.domain),
+  ruleNameReg = new RegExp(rule.name),
+  ruleValueReg = new RegExp(rule.value);
+  if (!_.isUndefined(rule.domain) && _.inNull(domain.match(ruleDomainReg))) {
+    return false;
+  } else if (!_.isUndefined(rule.name) && _.inNull(name.match(ruleNameReg))) {
+    return false;
+  } else if (!_.isUndefined(rule.value) && _.inNull(value.match(ruleValueReg))) {
+    return false;
+  } else {
     return true;
+  }
 }
 
 function getUrlVars() {
-    var d = [], c;
-    var a = window.location.href.slice(window.location.href.indexOf("?") + 1).split("&");
-    for (var b = 0; b < a.length; b++) {
-        c = a[b].split("=");
-        d.push(c[0]);
-        d[c[0]] = c[1]
-    }
-    return d
+  let d = [], c,
+  a = window.location.href.slice(window.location.href.indexOf("?") + 1).split("&");
+  for (var b = 0; b < a.length; b++) {
+    c = a[b].split("=");
+    d.push(c[0]);
+    d[c[0]] = c[1]
+  }
+  return d;
 }
 
 function showPopup(info, tab) {
-    var tabUrl = encodeURI(tab.url);
-    var tabID = encodeURI(tab.id);
-    var tabIncognito = encodeURI(tab.incognito);
+  let tabUrl = encodeURI(tab.url),
+  tabID = encodeURI(tab.id),
+  tabIncognito = encodeURI(tab.incognito),
+  urlToOpen = chrome.extension.getURL("index.html") + "?url=" + tabUrl + "&id=" + tabID + "&incognito=" + tabIncognito;
 
-    var urlToOpen = chrome.extension.getURL("index.html") + "?url=" + tabUrl + "&id=" + tabID + "&incognito=" + tabIncognito;
-
-    chrome.tabs.query({ 'windowId': chrome.windows.WINDOW_ID_CURRENT }, function (tabList) {
-        for (var x = 0; x < tabList.length; x++) {
-            var cTab = tabList[x];
-            if (cTab.url.indexOf(urlToOpen) === 0) {
-                chrome.tabs.update(cTab.id, {
-                    'selected': true
-                });
-                return
-            }
-        }
-        chrome.tabs.create({
-            'url': urlToOpen
-        })
+  chrome.tabs.query({ 'windowId': chrome.windows.WINDOW_ID_CURRENT }, function (tabList) {
+    for (var x = 0; x < tabList.length; x++) {
+      let cTab = tabList[x];
+      if (cTab.url.indexOf(urlToOpen) === 0) {
+        chrome.tabs.update(cTab.id, {
+          'selected': true
+        });
+        return
+      }
+    }
+    chrome.tabs.create({
+      'url': urlToOpen
     })
+  })
 }
 
 function copyToClipboard(text) {
-    if (text === undefined)
-        return;
-
-    //Appending an element causes the window to scroll...so we save the scroll position and restore it later
-    var scrollsave = $('body').scrollTop();
-
-    var copyDiv = document.createElement('textarea');
-    copyDiv.style.height = "0.5px";
-    document.body.appendChild(copyDiv, document.body.firstChild);
-    $(copyDiv).text(text);
-    copyDiv.focus();
-    copyDiv.select();
-    document.execCommand("copy");
-    document.body.removeChild(copyDiv);
-
-    $('body').scrollTop(scrollsave);
+  if (_.isUndefined(text)){
+    return;
+  }
+  let scrollsave = $('body').scrollTop(),
+  copyDiv = document.createElement('textarea');
+  copyDiv.style.height = "0.5px";
+  document.body.appendChild(copyDiv, document.body.firstChild);
+  $(copyDiv).text(text);
+  copyDiv.focus();
+  copyDiv.select();
+  document.execCommand("copy");
+  document.body.removeChild(copyDiv);
+  $('body').scrollTop(scrollsave);
 }
 
 function setLoaderVisible(visible) {
-    if (visible) {
-        $("#loader-container").show();
-    } else {
-        $("#loader-container").hide();
-    }
+  if (visible) {
+    $("#loader-container").show();
+  } else {
+    $("#loader-container").hide();
+  }
 }

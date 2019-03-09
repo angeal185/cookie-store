@@ -25,6 +25,7 @@ function initOptions(){
       $("#showFlagAndDeleteAll").prop('checked', preferences.showFlagAndDeleteAll);
       $("#showCommandsLabels").prop('checked', preferences.showCommandsLabels);
       $("#showAnimate").prop('checked', preferences.showAnimate);
+      $("#privacyMode").prop('checked', preferences.privacyMode);
 
 
       $("#refreshAfterSubmit").prop('checked', preferences.refreshAfterSubmit);
@@ -82,6 +83,9 @@ function initOptions(){
       });
       $("#showAnimate").off().on('click', function(){
           preferences.showAnimate = $('#showAnimate').prop("checked");
+      });
+      $("#privacyMode").off().on('click', function(){
+          preferences.privacyMode = $('#privacyMode').prop("checked");
       });
 
       $("#useMaxDate").off().on('click', function(){
@@ -732,15 +736,14 @@ function initStore(){
       }
     });
   })
-
   return
 }
 
 $(document).ready(function () {
-
+  
   $('nav:first').after(optBaseTpl())
   if(preferences.showAnimate) {
-    var particle = new Particles().init();
+    initParticles()
   }
   _.forEach(['token','user'],function(i){
     if(!sessionStorage.getItem(i) || _.eq(sessionStorage.getItem(i), '')) {
